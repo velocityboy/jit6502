@@ -26,7 +26,7 @@ auto AssemblerX86::encodeCall(NativeAddress fn)->void
     // The operand to CALL is a signed quantity relative to the end of
     // the instruction
 
-    auto delta = ptrdiff(fn, vm_->nextByte()) - sizeof(uint32_t);
+    auto delta = fn - (vm_->nextByte() + sizeof(uint32_t));
 
     for (auto i = 0; i < 4; i++) {
         vm_->addByte(delta & 0xFF);

@@ -91,7 +91,7 @@ auto Jitter6502::jitInvalidOpcode(TargetAddress *ip)->bool
 {
     assembler_->encodeMoveRegConstant(EAX, *ip - 1);
     assembler_->encodePushRegister(EAX);
-    assembler_->encodeCall(&invalidOpcodeStub);
+    assembler_->encodeCall(ToNativeAddress(&invalidOpcodeStub));
     // no need to clean up, exception will have been thrown
     return false;
 }

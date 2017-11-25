@@ -25,6 +25,8 @@ class AssemblerX86
 public:
     AssemblerX86(JitVM *vm);
 
+    static_assert(sizeof(NativeAddress) == sizeof(uint32_t), "assembler_x86 may only be compiled in 32-bit.");
+
     auto beginCodeFragment()->void;
     auto endCodeFragment()->void *;
 
