@@ -18,35 +18,32 @@ Jitter6502::Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory)
     buildReentryStub();
 }
 
+auto Jitter6502::start()->void
+{
+    entryStub_(vm_, exitStub_);
+}
+
+
 auto Jitter6502::jit(Address ip)->void
 {
 }
 
 auto Jitter6502::buildReentryStub()->void
 {
+    // Set up stack, EDI -> VM, and jump to entry
     assembler_->beginCodeFragment();
-
     assembler_->encodePushRegister(EBP);
     assembler_->encodeMoveRegReg(EBP, ESP);
     assembler_->encodeMoveRegPtrOffset(EDI, EBP, 8);
+    assembler_->encodeJumpIndirect(EBP, 12);
+    entryStub_ = static_cast<Entry>(assembler_->endCodeFragment());
 
-    assembler_->endCodeFragment();
-
-    // entry(jitvm, jitstart)
-    // jitvm ebp+8
-    // jitstart ebp+12
-    // push ebp
-    // mov ebp, esp
-    // mov r11, [ebp+8]
-    // jmp[ebp+12]
-    // 
-
-    // exit
-    // mov esp, ebp
-    // pop ebp
-    // ret
-
-
+    // Set up return
+    assembler_->beginCodeFragment();
+    assembler_->encodeMoveRegReg(ESP, EBP);
+    assembler_->encodePopRegister(EBP);
+    assembler_->encodeRet();
+    exitStub_ = static_cast<Exit>(assembler_->endCodeFragment());
 }
 
 auto Jitter6502::jitInvalidOpcode()->bool

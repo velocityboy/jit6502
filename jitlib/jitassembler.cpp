@@ -18,6 +18,33 @@ auto JitAssembler::endCodeFragment() -> void *
     return vm_->endCodeFragment();
 }
 
+auto JitAssembler::encodeJumpIndirect(X86Register reg, uint32_t offset)->void
+{
+    MOD mod = MOD_INDIRECT;
+    int offsetBytes = 0;
+
+    if (offset) {
+        if (offset < 0x80 || offset > 0xFFFFFF80) {
+            mod = MOD_DISP8;
+            offsetBytes = 1;
+        }
+        else {
+            mod = MOD_DISP32;
+            offsetBytes = 4;
+        }
+    }
+
+    uint8_t modrm = buildModRM(mod, static_cast<X86Register>(4), reg);
+
+    vm_->addByte(0xFF);
+    vm_->addByte(modrm);
+
+    while (offsetBytes--) {
+        vm_->addByte(offset & 0xFF);
+        offset >>= 8;
+    }
+}
+
 auto JitAssembler::encodeMoveRegReg(X86Register dst, X86Register src)->void
 {
     uint8_t modrm = buildModRM(MOD_REG, dst, src);
@@ -51,6 +78,11 @@ auto JitAssembler::encodeMoveRegPtrOffset(X86Register dst, X86Register ptr, uint
         vm_->addByte(offset & 0xFF);
         offset >>= 8;
     }
+}
+
+auto JitAssembler::encodePopRegister(X86Register reg)->void
+{
+    vm_->addByte(0x58 | reg);
 }
 
 auto JitAssembler::encodePushRegister(X86Register reg)->void

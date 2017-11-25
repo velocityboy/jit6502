@@ -46,18 +46,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     SystemMemory memory{};
     Jitter6502 jitter(&vm, &assembler, &memory);
 
-
-
-
-    assembler.beginCodeFragment();
-    assembler.encodeRet();
-    auto fragment = assembler.endCodeFragment();
-
-
-	
-
-    auto dyn = (void(*)(JitVM*))fragment;
-    dyn(&vm);
+    jitter.start();
 
     try {
         SystemMemory memory;

@@ -25,9 +25,10 @@ public:
     auto beginCodeFragment()->void;
     auto endCodeFragment()->void *;
 
+    auto encodeJumpIndirect(X86Register reg, uint32_t offset = 0)->void;
     auto encodeMoveRegReg(X86Register dst, X86Register src)->void;
     auto encodeMoveRegPtrOffset(X86Register dst, X86Register ptr, uint32_t offset = 0)->void;
-
+    auto encodePopRegister(X86Register reg)->void;
     auto encodePushRegister(X86Register reg)->void;
     auto encodeRet()->void;
 
