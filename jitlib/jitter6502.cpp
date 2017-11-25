@@ -8,10 +8,14 @@
 #include "systemmemory.h"
 
 #include <iomanip>
+#include <iostream>
 #include <sstream>
+#include <stdexcept>
 
 using std::array;
+using std::endl;
 using std::hex;
+using std::runtime_error;
 using std::setfill;
 using std::setw;
 
@@ -32,7 +36,14 @@ auto Jitter6502::boot()->void
     auto ip = memory_->readWord(RESET);
     auto start = jit(ip);
 
-    entryStub_(vm_, start);
+    try {
+        entryStub_(vm_, start);
+    }
+    catch (runtime_error err) {
+        auto errText = oss{};
+        errText << "Runtime threw exception: " << err.what() << endl;
+        OutputDebugStringA(errText.str().c_str());
+    }
 }
 
 auto Jitter6502::jit(Address ip)->NativeAddress
@@ -71,7 +82,7 @@ auto Jitter6502::invalidOpcodeStub(Address addr)->void
 {
     oss()
         << "Execution terminated at "
-        << setw(4) << setfill('0') << addr
+        << setw(4) << setfill('0') << hex << addr
         << "; invalid opcode"
         << throwError;
 }

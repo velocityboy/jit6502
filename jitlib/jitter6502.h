@@ -12,7 +12,6 @@ class SystemMemory;
 class Jitter6502
 {
 public:
-    using NativeAddress = void *;
 
     Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory);
 

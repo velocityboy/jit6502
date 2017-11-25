@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "jitassembler.h"
+#include "types.h"
 
 class JitVM
 {
@@ -11,8 +12,9 @@ public:
 	~JitVM();
 
     auto beginCodeFragment() -> void;
-    auto endCodeFragment() -> void *;
+    auto endCodeFragment() -> NativeAddress;
     auto addByte(uint8_t byte) -> void;
+    auto nextByte() -> NativeAddress;
 
 private:
     auto expandRegion() -> void;

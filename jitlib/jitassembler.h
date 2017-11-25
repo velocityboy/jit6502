@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <vector>
 
+#include "types.h"
+
 class JitVM;
 
 // in order of instruction encoding index
@@ -26,7 +28,7 @@ public:
     auto beginCodeFragment()->void;
     auto endCodeFragment()->void *;
 
-    auto encodeCall(void *fn)->void;
+    auto encodeCall(NativeAddress fn)->void;
     auto encodeJumpIndirect(X86Register reg, uint32_t offset = 0)->void;
     auto encodeMoveRegReg(X86Register dst, X86Register src)->void;
     auto encodeMoveRegPtrOffset(X86Register dst, X86Register ptr, uint32_t offset = 0)->void;

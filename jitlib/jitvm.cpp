@@ -41,7 +41,7 @@ auto JitVM::beginCodeFragment() -> void
     nextFragmentByte_ = nextFree_;
 }
 
-auto JitVM::endCodeFragment() -> void *
+auto JitVM::endCodeFragment() -> NativeAddress
 {
     assert(currentFragmentStart_ != nullptr);
     assert(nextFragmentByte_ != nullptr);
@@ -68,6 +68,12 @@ auto JitVM::addByte(uint8_t byte) -> void
     }
     *nextFragmentByte_++ = byte;
 }
+
+auto JitVM::nextByte()->NativeAddress
+{
+    return nextFragmentByte_;
+}
+
 
 auto JitVM::expandRegion() -> void
 {

@@ -18,13 +18,19 @@ auto JitAssembler::endCodeFragment() -> void *
     return vm_->endCodeFragment();
 }
 
-auto JitAssembler::encodeCall(void *fn)->void
+auto JitAssembler::encodeCall(NativeAddress fn)->void
 {
     auto addr = reinterpret_cast<uint32_t>(fn);
     vm_->addByte(0xE8);
+
+    // The operand to CALL is a signed quantity relative to the end of
+    // the instruction
+
+    auto delta = ptrdiff(fn, vm_->nextByte()) - sizeof(uint32_t);
+
     for (auto i = 0; i < 4; i++) {
-        vm_->addByte(addr & 0xFF);
-        addr >>= 8;
+        vm_->addByte(delta & 0xFF);
+        delta >>= 8;
     }
 }
 
