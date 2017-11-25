@@ -18,6 +18,16 @@ auto JitAssembler::endCodeFragment() -> void *
     return vm_->endCodeFragment();
 }
 
+auto JitAssembler::encodeCall(void *fn)->void
+{
+    auto addr = reinterpret_cast<uint32_t>(fn);
+    vm_->addByte(0xE8);
+    for (auto i = 0; i < 4; i++) {
+        vm_->addByte(addr & 0xFF);
+        addr >>= 8;
+    }
+}
+
 auto JitAssembler::encodeJumpIndirect(X86Register reg, uint32_t offset)->void
 {
     MOD mod = MOD_INDIRECT;
@@ -80,6 +90,16 @@ auto JitAssembler::encodeMoveRegPtrOffset(X86Register dst, X86Register ptr, uint
     }
 }
 
+auto JitAssembler::encodeMoveRegConstant(X86Register dst, uint32_t c)->void
+{
+    vm_->addByte(0xB8 | dst);
+
+    for (auto i = 0; i < 4; i++) {
+        vm_->addByte(c & 0xFF);
+        c >>= 8;
+    }
+}
+
 auto JitAssembler::encodePopRegister(X86Register reg)->void
 {
     vm_->addByte(0x58 | reg);
@@ -98,15 +118,6 @@ auto JitAssembler::encodeRet() -> void
 
 auto JitAssembler::buildModRM(MOD mod, X86Register reg, X86Register mem)->uint8_t
 {
-    // These encodings either mean raw displacement, or the existence of a SIB
-    // byte.
-    if (mod == MOD_INDIRECT) {
-        assert(mem != ESP && mem != EBP);
-    }
-    else if (mod == MOD_DISP8 || mod == MOD_DISP32) {
-        assert(mem != ESP);
-    }
-
     assert(reg >= 0 && reg < 8);
     assert(mem >= 0 && mem < 8);
 

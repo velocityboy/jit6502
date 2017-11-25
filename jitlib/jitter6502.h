@@ -1,8 +1,9 @@
 #pragma once
 
-#include <array>
-
 #include "types.h"
+
+#include <array>
+#include <unordered_map>
 
 class JitVM;
 class JitAssembler;
@@ -11,19 +12,22 @@ class SystemMemory;
 class Jitter6502
 {
 public:
+    using NativeAddress = void *;
+
     Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory);
 
-    auto start()->void;
+    auto boot()->void;
 
-    auto jit(Address ip)->void;
+    auto jit(Address ip)->NativeAddress;
 
 private:
-    using InstructionJitter = bool(Jitter6502::*)();
-    using Entry = void(*)(JitVM *, void *entry);
+    using InstructionJitter = bool(Jitter6502::*)(Address *ip);
+    using Entry = void(*)(JitVM *, NativeAddress entry);
     using Exit = void(*)(void);
 
     auto buildReentryStub()->void;
-    auto jitInvalidOpcode()->bool;
+    static auto invalidOpcodeStub(Address addr)->void;
+    auto jitInvalidOpcode(Address *ip)->bool;
 
     static std::array<InstructionJitter, 256> jitters_;
 

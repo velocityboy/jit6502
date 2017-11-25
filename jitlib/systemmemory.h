@@ -61,6 +61,9 @@ public:
     auto installRAM(Address baseAddress, AddressSize length)->void;
     auto installIO(Address baseAddress, AddressSize length, IOHandler *handler)->void;
 
+    auto readByte(Address address)->uint8_t;
+    auto readWord(Address address)->uint16_t;
+
 private:
     using Memory = std::array<uint8_t, SIZE>;
     using PageFlagsArray = std::array<PageFlags, PAGES>;

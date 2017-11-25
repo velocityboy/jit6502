@@ -49,6 +49,36 @@ auto SystemMemory::installIO(Address baseAddress, AddressSize length, IOHandler 
     installRange(baseAddress, length, IO, handler);
 }
 
+auto SystemMemory::readByte(Address address)->uint8_t
+{
+    auto page = pageOf(address);
+    auto flags = pageFlags_[page];
+
+    if ((flags & ReadableFlag) != 0) {
+        return memory_[address];
+    }
+
+    if ((flags & MixedFlag) != 0) {
+        auto handlers = mixedPageHandlerMap_.find(page);
+        if (handlers != end(mixedPageHandlerMap_)) {
+            auto handler = handlers->second[pageOffsetOf(address)];
+            if (handler != nullptr) {
+                return handler->read(address);
+            }
+        }
+    }
+
+    // $TODO nothing at address, should really throw an exception and handle
+    return 0xFF;
+}
+
+auto SystemMemory::readWord(Address address)->uint16_t
+{
+    auto low = readByte(address);
+    auto high = readByte(address + 1);
+    return (high << 8) | low;
+}
+
 auto SystemMemory::pageOf(Address address)->PageIndex
 {
     return address / PAGE_SIZE;
@@ -135,6 +165,10 @@ auto SystemMemory::installRange(Address baseAddress, size_t length, PageType typ
     auto endPage = pageOf(baseAddress + static_cast<AddressSize>(length));
     auto startOffset = pageOffsetOf(baseAddress);
     auto endOffset = pageOffsetOf(baseAddress + static_cast<AddressSize>(length));
+
+    if (endPage == 0) {
+        endPage = PAGES;
+    }
 
     auto overlaps = false;
 

@@ -2,13 +2,20 @@
 
 #include "jitter6502.h"
 
+#include "exceptions.h"
 #include "jitvm.h"
 #include "jitassembler.h"
-#include"systemmemory.h"
+#include "systemmemory.h"
+
+#include <iomanip>
+#include <sstream>
 
 using std::array;
+using std::hex;
+using std::setfill;
+using std::setw;
 
-
+using oss = std::ostringstream;
 
 Jitter6502::Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory)
     : vm_(vm)
@@ -18,14 +25,28 @@ Jitter6502::Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory)
     buildReentryStub();
 }
 
-auto Jitter6502::start()->void
+auto Jitter6502::boot()->void
 {
-    entryStub_(vm_, exitStub_);
+    const Address RESET = 0xFFFC;
+
+    auto ip = memory_->readWord(RESET);
+    auto start = jit(ip);
+
+    entryStub_(vm_, start);
 }
 
-
-auto Jitter6502::jit(Address ip)->void
+auto Jitter6502::jit(Address ip)->NativeAddress
 {
+    auto inBlock = true;
+
+    vm_->beginCodeFragment();
+    while (true) {
+        auto byte = memory_->readByte(ip++);
+        if (!(this->*jitters_[byte])(&ip)) {
+            break;
+        }
+    }
+    return vm_->endCodeFragment();
 }
 
 auto Jitter6502::buildReentryStub()->void
@@ -46,11 +67,23 @@ auto Jitter6502::buildReentryStub()->void
     exitStub_ = static_cast<Exit>(assembler_->endCodeFragment());
 }
 
-auto Jitter6502::jitInvalidOpcode()->bool
+auto Jitter6502::invalidOpcodeStub(Address addr)->void 
 {
-    return true;
+    oss()
+        << "Execution terminated at "
+        << setw(4) << setfill('0') << addr
+        << "; invalid opcode"
+        << throwError;
 }
 
+auto Jitter6502::jitInvalidOpcode(Address *ip)->bool
+{
+    assembler_->encodeMoveRegConstant(EAX, *ip - 1);
+    assembler_->encodePushRegister(EAX);
+    assembler_->encodeCall(&invalidOpcodeStub);
+    // no need to clean up, exception will have been thrown
+    return false;
+}
 
 array<Jitter6502::InstructionJitter, 256> Jitter6502::jitters_ = {
     /*00*/ &Jitter6502::jitInvalidOpcode,

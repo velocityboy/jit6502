@@ -41,12 +41,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	increment(1);
 
+    std::vector<uint8_t> testROM;
+    // FE00-FFFF
+    testROM.resize(512);
+    testROM[0x01FC] = 0x00;
+    testROM[0x01FD] = 0xFE;
+    testROM[0x0000] = 0xA9;
+    testROM[0x0001] = 0x55;
+    testROM[0x0002] = 0x4C;
+    testROM[0x0003] = 0x00;
+    testROM[0x0004] = 0xFD;
+
+
     JitVM vm(1024*1024);
     JitAssembler assembler(&vm);
     SystemMemory memory{};
+    memory.installROM(0xFE00, testROM);
+
     Jitter6502 jitter(&vm, &assembler, &memory);
 
-    jitter.start();
+    jitter.boot();
 
     try {
         SystemMemory memory;
