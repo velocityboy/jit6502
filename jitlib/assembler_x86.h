@@ -20,10 +20,10 @@ enum X86Register {
     EDI = 7,
 };
 
-class JitAssembler
+class AssemblerX86
 {
 public:
-    JitAssembler(JitVM *vm);
+    AssemblerX86(JitVM *vm);
 
     auto beginCodeFragment()->void;
     auto endCodeFragment()->void *;

@@ -29,8 +29,8 @@ public:
     {
     public:
         virtual ~IOHandler();
-        virtual auto read(Address addr)->uint8_t = 0;
-        virtual auto write(Address addr, uint8_t data)->void = 0;
+        virtual auto read(TargetAddress addr)->uint8_t = 0;
+        virtual auto write(TargetAddress addr, uint8_t data)->void = 0;
     };
 
 
@@ -57,12 +57,12 @@ public:
     SystemMemory();
 
     // setup
-    auto installROM(Address baseAddress, const std::vector<uint8_t> &contents)->void;
-    auto installRAM(Address baseAddress, AddressSize length)->void;
-    auto installIO(Address baseAddress, AddressSize length, IOHandler *handler)->void;
+    auto installROM(TargetAddress baseAddress, const std::vector<uint8_t> &contents)->void;
+    auto installRAM(TargetAddress baseAddress, TargetAddressSize length)->void;
+    auto installIO(TargetAddress baseAddress, TargetAddressSize length, IOHandler *handler)->void;
 
-    auto readByte(Address address)->uint8_t;
-    auto readWord(Address address)->uint16_t;
+    auto readByte(TargetAddress address)->uint8_t;
+    auto readWord(TargetAddress address)->uint16_t;
 
 private:
     using Memory = std::array<uint8_t, SIZE>;
@@ -70,19 +70,19 @@ private:
     using MixedPageHandlers = std::array<IOHandler *, PAGE_SIZE>;
     using MixedPageHandlerMap = std::unordered_map<PageIndex, MixedPageHandlers>;
 
-    auto pageOf(Address address)->PageIndex;
-    auto pageOffsetOf(Address address)->PageOffset;
+    auto pageOf(TargetAddress address)->PageIndex;
+    auto pageOffsetOf(TargetAddress address)->PageOffset;
     auto pageTypeToFlags(PageType type)->PageFlags;
     auto pageTypeToString(PageType type)->std::string;
 
-    auto installRange(Address baseAddress, size_t length, PageType type, IOHandler *handler)->void;
+    auto installRange(TargetAddress baseAddress, size_t length, PageType type, IOHandler *handler)->void;
     auto installPage(PageIndex page, PageOffset startOffset, PageOffset endOffset, PageType type, IOHandler *handler)->bool;
 
     class ROMHandler : public IOHandler {
     public:
         ROMHandler(const Memory &memory);
-        virtual auto read(Address addr)->uint8_t override;
-        virtual auto write(Address addr, uint8_t data)->void override;
+        virtual auto read(TargetAddress addr)->uint8_t override;
+        virtual auto write(TargetAddress addr, uint8_t data)->void override;
     private:
         const Memory &memory_;
     };
@@ -90,8 +90,8 @@ private:
     class RAMHandler : public IOHandler {
     public:
         RAMHandler(Memory &memory);
-        virtual auto read(Address addr)->uint8_t override;
-        virtual auto write(Address addr, uint8_t data)->void override;
+        virtual auto read(TargetAddress addr)->uint8_t override;
+        virtual auto write(TargetAddress addr, uint8_t data)->void override;
     private:
         Memory &memory_;
     };

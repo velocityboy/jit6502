@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "jit6502.h"
 
-#include "../jitlib/jitassembler.h"
+#include "../jitlib/assembler_x86.h"
 #include "../jitlib/jitvm.h"
 #include "../jitlib/systemmemory.h"
 #include "../jitlib/jitter6502.h"
@@ -54,7 +54,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
     JitVM vm(1024*1024);
-    JitAssembler assembler(&vm);
+    AssemblerX86 assembler(&vm);
     SystemMemory memory{};
     memory.installROM(0xFE00, testROM);
 

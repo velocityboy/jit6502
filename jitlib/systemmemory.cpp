@@ -33,23 +33,23 @@ SystemMemory::SystemMemory()
     fill(begin(pageFlags_), end(pageFlags_), EmptyFlag);
 }
 
-auto SystemMemory::installROM(Address baseAddress, const std::vector<uint8_t> &contents)->void
+auto SystemMemory::installROM(TargetAddress baseAddress, const std::vector<uint8_t> &contents)->void
 {
     installRange(baseAddress, contents.size(), ROM, &romHandler_);
     copy(begin(contents), end(contents), begin(memory_) + baseAddress);
 }
 
-auto SystemMemory::installRAM(Address baseAddress, AddressSize length)->void
+auto SystemMemory::installRAM(TargetAddress baseAddress, TargetAddressSize length)->void
 {
     installRange(baseAddress, length, ROM, &ramHandler_);
 }
 
-auto SystemMemory::installIO(Address baseAddress, AddressSize length, IOHandler *handler)->void
+auto SystemMemory::installIO(TargetAddress baseAddress, TargetAddressSize length, IOHandler *handler)->void
 {
     installRange(baseAddress, length, IO, handler);
 }
 
-auto SystemMemory::readByte(Address address)->uint8_t
+auto SystemMemory::readByte(TargetAddress address)->uint8_t
 {
     auto page = pageOf(address);
     auto flags = pageFlags_[page];
@@ -72,19 +72,19 @@ auto SystemMemory::readByte(Address address)->uint8_t
     return 0xFF;
 }
 
-auto SystemMemory::readWord(Address address)->uint16_t
+auto SystemMemory::readWord(TargetAddress address)->uint16_t
 {
     auto low = readByte(address);
     auto high = readByte(address + 1);
     return (high << 8) | low;
 }
 
-auto SystemMemory::pageOf(Address address)->PageIndex
+auto SystemMemory::pageOf(TargetAddress address)->PageIndex
 {
     return address / PAGE_SIZE;
 }
 
-auto SystemMemory::pageOffsetOf(Address address)->PageOffset
+auto SystemMemory::pageOffsetOf(TargetAddress address)->PageOffset
 {
     return address % PAGE_SIZE;
 }
@@ -132,7 +132,7 @@ auto SystemMemory::pageTypeToString(PageType type)->string
     return "Unknown";
 }
 
-auto SystemMemory::installRange(Address baseAddress, size_t length, PageType type, IOHandler *handler)->void
+auto SystemMemory::installRange(TargetAddress baseAddress, size_t length, PageType type, IOHandler *handler)->void
 {
     if (length == 0) {
         oss()
@@ -162,9 +162,9 @@ auto SystemMemory::installRange(Address baseAddress, size_t length, PageType typ
     }
 
     auto startPage = pageOf(baseAddress);
-    auto endPage = pageOf(baseAddress + static_cast<AddressSize>(length));
+    auto endPage = pageOf(baseAddress + static_cast<TargetAddressSize>(length));
     auto startOffset = pageOffsetOf(baseAddress);
-    auto endOffset = pageOffsetOf(baseAddress + static_cast<AddressSize>(length));
+    auto endOffset = pageOffsetOf(baseAddress + static_cast<TargetAddressSize>(length));
 
     if (endPage == 0) {
         endPage = PAGES;
@@ -239,12 +239,12 @@ SystemMemory::ROMHandler::ROMHandler(const Memory &memory)
 {
 }
 
-auto SystemMemory::ROMHandler::read(Address addr)->uint8_t
+auto SystemMemory::ROMHandler::read(TargetAddress addr)->uint8_t
 {
     return memory_[addr];
 }
 
-auto SystemMemory::ROMHandler::write(Address addr, uint8_t data)->void
+auto SystemMemory::ROMHandler::write(TargetAddress addr, uint8_t data)->void
 {
     //$TODO might be nice to log this - could be bug in hosted code
 }
@@ -254,12 +254,12 @@ SystemMemory::RAMHandler::RAMHandler(Memory &memory)
 {
 }
 
-auto SystemMemory::RAMHandler::read(Address addr)->uint8_t
+auto SystemMemory::RAMHandler::read(TargetAddress addr)->uint8_t
 {
     return memory_[addr];
 }
 
-auto SystemMemory::RAMHandler::write(Address addr, uint8_t data)->void
+auto SystemMemory::RAMHandler::write(TargetAddress addr, uint8_t data)->void
 {
     memory_[addr] = data;
 }

@@ -4,7 +4,7 @@
 
 #include "exceptions.h"
 #include "jitvm.h"
-#include "jitassembler.h"
+#include "assembler_x86.h"
 #include "systemmemory.h"
 
 #include <iomanip>
@@ -21,7 +21,7 @@ using std::setw;
 
 using oss = std::ostringstream;
 
-Jitter6502::Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory)
+Jitter6502::Jitter6502(JitVM *vm, AssemblerX86 *assembler, SystemMemory *memory)
     : vm_(vm)
     , assembler_(assembler)
     , memory_(memory)
@@ -31,7 +31,7 @@ Jitter6502::Jitter6502(JitVM *vm, JitAssembler *assembler, SystemMemory *memory)
 
 auto Jitter6502::boot()->void
 {
-    const Address RESET = 0xFFFC;
+    const TargetAddress RESET = 0xFFFC;
 
     auto ip = memory_->readWord(RESET);
     auto start = jit(ip);
@@ -46,7 +46,7 @@ auto Jitter6502::boot()->void
     }
 }
 
-auto Jitter6502::jit(Address ip)->NativeAddress
+auto Jitter6502::jit(TargetAddress ip)->NativeAddress
 {
     auto inBlock = true;
 
@@ -78,7 +78,7 @@ auto Jitter6502::buildReentryStub()->void
     exitStub_ = static_cast<Exit>(assembler_->endCodeFragment());
 }
 
-auto Jitter6502::invalidOpcodeStub(Address addr)->void 
+auto Jitter6502::invalidOpcodeStub(TargetAddress addr)->void 
 {
     oss()
         << "Execution terminated at "
@@ -87,7 +87,7 @@ auto Jitter6502::invalidOpcodeStub(Address addr)->void
         << throwError;
 }
 
-auto Jitter6502::jitInvalidOpcode(Address *ip)->bool
+auto Jitter6502::jitInvalidOpcode(TargetAddress *ip)->bool
 {
     assembler_->encodeMoveRegConstant(EAX, *ip - 1);
     assembler_->encodePushRegister(EAX);

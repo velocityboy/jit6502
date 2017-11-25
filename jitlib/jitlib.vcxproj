@@ -128,7 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="exceptions.h" />
-    <ClInclude Include="jitassembler.h" />
+    <ClInclude Include="assembler_x86.h" />
     <ClInclude Include="jitvm.h" />
     <ClInclude Include="systemmemory.h" />
     <ClInclude Include="jitter6502.h" />
@@ -138,7 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="exceptions.cpp" />
-    <ClCompile Include="jitassembler.cpp" />
+    <ClCompile Include="assembler_x86.cpp" />
     <ClCompile Include="jitvm.cpp" />
     <ClCompile Include="systemmemory.cpp" />
     <ClCompile Include="jitter6502.cpp" />

@@ -2,8 +2,8 @@
 
 #include <stdint.h>
 
-using Address = uint16_t;
-using AddressSize = uint16_t;
+using TargetAddress = uint16_t;
+using TargetAddressSize = uint16_t;
 using NativeAddress = void *;
 
 inline auto ptrdiff(NativeAddress left, NativeAddress right) -> ptrdiff_t

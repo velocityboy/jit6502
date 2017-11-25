@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "jitassembler.h"
+#include "assembler_x86.h"
 #include "types.h"
 
 class JitVM
