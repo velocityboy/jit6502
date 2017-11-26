@@ -27,6 +27,7 @@ Jitter6502::Jitter6502(JitVM *vm, AssemblerX86 *assembler, SystemMemory *memory)
     , memory_(memory)
 {
     buildReentryStub();
+    buildFlagTranslationMap();
 }
 
 auto Jitter6502::boot()->void
@@ -66,6 +67,7 @@ auto Jitter6502::buildReentryStub()->void
     assembler_->beginCodeFragment();
     assembler_->encodePushRegister(EBP);
     assembler_->encodeMoveRegReg(EBP, ESP);
+    assembler_->encodeXorReg(EBX, EBX);
     assembler_->encodeMoveRegPtrOffset(EDI, EBP, 8);
     assembler_->encodeJumpIndirect(EBP, 12);
     entryStub_ = static_cast<Entry>(assembler_->endCodeFragment());
@@ -77,6 +79,28 @@ auto Jitter6502::buildReentryStub()->void
     assembler_->encodeRet();
     exitStub_ = static_cast<Exit>(assembler_->endCodeFragment());
 }
+
+auto Jitter6502::buildFlagTranslationMap()->void
+{
+    for (int i = 0; i < 0x100; i++) {
+        uint8_t flags6502 = 0x00;
+        
+        if ((i & X86_CARRY) != 0) {
+            flags6502 |= M6502_CARRY;
+        }
+
+        if ((i & X86_ZERO) != 0) {
+            flags6502 |= M6502_ZERO;
+        }
+
+        if ((i & X86_SIGN) != 0) {
+            flags6502 |= M6502_SIGN;
+        }
+
+        flagTranslationMap_[i] = flags6502;
+    }
+}
+
 
 auto Jitter6502::invalidOpcodeStub(TargetAddress addr)->void 
 {
@@ -94,6 +118,35 @@ auto Jitter6502::jitInvalidOpcode(TargetAddress *ip)->bool
     assembler_->encodeCall(ToNativeAddress(&invalidOpcodeStub));
     // no need to clean up, exception will have been thrown
     return false;
+}
+
+auto Jitter6502::jitLDA_IMM(TargetAddress *ip)->bool
+{
+    jit_getImmediateIntoAL(ip);
+    assembler_->encodeMoveRegReg8(BL, AL);
+    assembler_->encodeOrRegReg8(BL, BL);
+    jit_setFlags(M6502_ZERO | M6502_SIGN);
+    return true;
+}
+
+auto Jitter6502::jit_getImmediateIntoAL(TargetAddress *ip)->void
+{
+    auto imm = memory_->readByte(*ip);
+    (*ip)++;
+    assembler_->encodeMoveReg8Constant(AL, imm);
+}
+
+auto Jitter6502::jit_setFlags(uint8_t mask)->void
+{
+    if ((mask & (M6502_CARRY | M6502_ZERO | M6502_SIGN)) != 0) {
+        assembler_->encodeMoveRegConstant(EAX, 0);
+        assembler_->encodeLAHF();
+        assembler_->encodeShiftRightReg(EAX, 8);
+        assembler_->encodeMoveReg8PtrOffset(AL, EAX, reinterpret_cast<uint32_t>(&this->flagTranslationMap_));
+        assembler_->encodeAndReg8Constant(AL, mask);
+        assembler_->encodeAndReg8Constant(BH, ~mask);
+        assembler_->encodeOrRegReg8(BH, AL);
+    }
 }
 
 array<Jitter6502::InstructionJitter, 256> Jitter6502::jitters_ = {
@@ -276,7 +329,7 @@ array<Jitter6502::InstructionJitter, 256> Jitter6502::jitters_ = {
     /*A6*/ &Jitter6502::jitInvalidOpcode,
     /*A7*/ &Jitter6502::jitInvalidOpcode,
     /*A8*/ &Jitter6502::jitInvalidOpcode,
-    /*A9*/ &Jitter6502::jitInvalidOpcode,
+    /*A9*/ &Jitter6502::jitLDA_IMM,
     /*AA*/ &Jitter6502::jitInvalidOpcode,
     /*AB*/ &Jitter6502::jitInvalidOpcode,
     /*AC*/ &Jitter6502::jitInvalidOpcode,

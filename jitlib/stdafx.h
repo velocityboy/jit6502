@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <array>
+#include <functional>
 #include <iterator>
 #include <iomanip>
 #include <ios>
